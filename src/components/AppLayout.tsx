@@ -6,8 +6,12 @@ import {
   ShieldCheck, 
   ScrollText, 
   LayoutDashboard,
-  Link as LinkIcon
+  Link as LinkIcon,
+  Menu,
+  X
 } from "lucide-react";
+import { useState } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const navItems = [
   { to: "/", icon: LayoutDashboard, label: "Dashboard" },
@@ -18,60 +22,95 @@ const navItems = [
 ];
 
 export default function AppLayout() {
+  const isMobile = useIsMobile();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const sidebarContent = (
+    <>
+      <div className="p-6 border-b border-border flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-lg bg-primary/10 border border-primary/30 flex items-center justify-center glow-chain">
+            <LinkIcon className="w-5 h-5 text-chain" />
+          </div>
+          <div>
+            <h1 className="font-display font-bold text-foreground text-sm tracking-tight">LandChain</h1>
+            <p className="text-[10px] text-muted-foreground font-mono uppercase tracking-widest">Registry v1.0</p>
+          </div>
+        </div>
+        {isMobile && (
+          <button onClick={() => setSidebarOpen(false)} className="text-muted-foreground hover:text-foreground">
+            <X className="w-5 h-5" />
+          </button>
+        )}
+      </div>
+
+      <nav className="flex-1 p-4 space-y-1">
+        {navItems.map((item) => (
+          <NavLink
+            key={item.to}
+            to={item.to}
+            end={item.to === "/"}
+            onClick={() => isMobile && setSidebarOpen(false)}
+            className={({ isActive }) =>
+              `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+                isActive
+                  ? "bg-primary/10 text-chain border border-primary/20 glow-chain"
+                  : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+              }`
+            }
+          >
+            <item.icon className="w-4 h-4" />
+            {item.label}
+          </NavLink>
+        ))}
+      </nav>
+
+      <div className="p-4 border-t border-border">
+        <div className="bg-secondary rounded-lg p-3">
+          <p className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider mb-1">Network</p>
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-success animate-pulse" />
+            <span className="text-xs text-foreground font-mono">Simulated Chain</span>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+
   return (
     <div className="flex min-h-screen bg-background">
+      {/* Mobile overlay */}
+      {isMobile && sidebarOpen && (
+        <div className="fixed inset-0 bg-black/60 z-20" onClick={() => setSidebarOpen(false)} />
+      )}
+
       {/* Sidebar */}
-      <aside className="w-64 border-r border-border bg-sidebar flex flex-col fixed h-screen z-10">
-        <div className="p-6 border-b border-border">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-primary/10 border border-primary/30 flex items-center justify-center glow-chain">
-              <LinkIcon className="w-5 h-5 text-chain" />
-            </div>
-            <div>
-              <h1 className="font-display font-bold text-foreground text-sm tracking-tight">LandChain</h1>
-              <p className="text-[10px] text-muted-foreground font-mono uppercase tracking-widest">Registry v1.0</p>
-            </div>
-          </div>
-        </div>
-
-        <nav className="flex-1 p-4 space-y-1">
-          {navItems.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.to === "/"}
-              className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
-                  isActive
-                    ? "bg-primary/10 text-chain border border-primary/20 glow-chain"
-                    : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-                }`
-              }
-            >
-              <item.icon className="w-4 h-4" />
-              {item.label}
-            </NavLink>
-          ))}
-        </nav>
-
-        <div className="p-4 border-t border-border">
-          <div className="bg-secondary rounded-lg p-3">
-            <p className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider mb-1">Network</p>
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-success animate-pulse" />
-              <span className="text-xs text-foreground font-mono">Simulated Chain</span>
-            </div>
-          </div>
-        </div>
+      <aside
+        className={`w-64 border-r border-border bg-sidebar flex flex-col fixed h-screen z-30 transition-transform duration-300 ${
+          isMobile ? (sidebarOpen ? "translate-x-0" : "-translate-x-full") : "translate-x-0"
+        }`}
+      >
+        {sidebarContent}
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 ml-64">
+      <main className={`flex-1 ${isMobile ? "" : "ml-64"}`}>
+        {isMobile && (
+          <header className="sticky top-0 z-10 flex items-center gap-3 p-4 border-b border-border bg-background/80 backdrop-blur-sm">
+            <button onClick={() => setSidebarOpen(true)} className="text-muted-foreground hover:text-foreground">
+              <Menu className="w-5 h-5" />
+            </button>
+            <div className="flex items-center gap-2">
+              <LinkIcon className="w-4 h-4 text-chain" />
+              <span className="font-display font-bold text-foreground text-sm">LandChain</span>
+            </div>
+          </header>
+        )}
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
-          className="p-8"
+          className="p-4 md:p-8"
         >
           <Outlet />
         </motion.div>
