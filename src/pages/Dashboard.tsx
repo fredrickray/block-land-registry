@@ -34,7 +34,7 @@ export default function Dashboard() {
         <p className="text-sm text-muted-foreground mt-1">Blockchain-powered land registry overview</p>
       </div>
 
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {statCards.map((s, i) => (
           <motion.div
             key={s.label}
