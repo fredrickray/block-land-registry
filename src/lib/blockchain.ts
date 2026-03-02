@@ -55,6 +55,16 @@ function generateSimpleHash(input: string): string {
     Math.abs(h * 41).toString(16).padStart(8, '0');
 }
 
+export interface TransferRequest {
+  id: string;
+  propertyId: string;
+  buyerName: string;
+  buyerContact: string;
+  status: 'pending' | 'approved' | 'rejected';
+  requestedAt: number;
+  resolvedAt?: number;
+}
+
 // Blockchain state store
 const STORAGE_KEY = 'land_registry_blockchain';
 
@@ -63,6 +73,7 @@ interface BlockchainState {
   transactions: Transaction[];
   blocks: Block[];
   blockIndex: number;
+  transferRequests: TransferRequest[];
 }
 
 function getDefaultState(): BlockchainState {
@@ -78,13 +89,18 @@ function getDefaultState(): BlockchainState {
       nonce: 0,
     }],
     blockIndex: 1,
+    transferRequests: [],
   };
 }
 
 function loadState(): BlockchainState {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) return JSON.parse(stored);
+    if (stored) {
+      const state = JSON.parse(stored);
+      if (!state.transferRequests) state.transferRequests = [];
+      return state;
+    }
   } catch { /* ignore */ }
   return getDefaultState();
 }
@@ -281,4 +297,50 @@ export function getBlocks(): Block[] {
 
 export function resetBlockchain() {
   localStorage.removeItem(STORAGE_KEY);
+}
+
+// Buyer functions
+export function requestTransfer(propertyId: string, buyerName: string, buyerContact: string): { success: boolean; message: string } {
+  const state = loadState();
+  const property = state.properties[propertyId];
+  if (!property) return { success: false, message: 'Property not found on blockchain.' };
+
+  const existing = state.transferRequests.find(r => r.propertyId === propertyId && r.status === 'pending');
+  if (existing) return { success: false, message: 'A pending transfer request already exists for this property.' };
+
+  if (property.ownerName === buyerName) return { success: false, message: 'You already own this property.' };
+
+  state.transferRequests.push({
+    id: `REQ-${Date.now()}`,
+    propertyId,
+    buyerName,
+    buyerContact,
+    status: 'pending',
+    requestedAt: Date.now(),
+  });
+  saveState(state);
+  return { success: true, message: 'Transfer request submitted successfully.' };
+}
+
+export function getTransferRequests(): TransferRequest[] {
+  return loadState().transferRequests;
+}
+
+export function getPropertiesByOwner(ownerName: string): PropertyRecord[] {
+  return Object.values(loadState().properties).filter(p => p.ownerName.toLowerCase() === ownerName.toLowerCase());
+}
+
+export function getPurchaseHistory(buyerName: string): Transaction[] {
+  return loadState().transactions.filter(t => t.to.toLowerCase() === buyerName.toLowerCase());
+}
+
+export function searchProperties(query: string): PropertyRecord[] {
+  const all = Object.values(loadState().properties);
+  if (!query.trim()) return all;
+  const q = query.toLowerCase();
+  return all.filter(p =>
+    p.propertyId.toLowerCase().includes(q) ||
+    p.location.toLowerCase().includes(q) ||
+    p.ownerName.toLowerCase().includes(q)
+  );
 }
