@@ -8,17 +8,28 @@ import {
   LayoutDashboard,
   Link as LinkIcon,
   Menu,
-  X
+  X,
+  Search,
+  Send,
+  Home,
+  History
 } from "lucide-react";
 import { useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 
-const navItems = [
+const sellerNavItems = [
   { to: "/", icon: LayoutDashboard, label: "Dashboard" },
   { to: "/register", icon: Building2, label: "Register Property" },
   { to: "/transfer", icon: ArrowRightLeft, label: "Transfer" },
   { to: "/verify", icon: ShieldCheck, label: "Verify" },
   { to: "/transactions", icon: ScrollText, label: "Transactions" },
+];
+
+const buyerNavItems = [
+  { to: "/buyer/search", icon: Search, label: "Property Search" },
+  { to: "/buyer/request", icon: Send, label: "Request Transfer" },
+  { to: "/buyer/properties", icon: Home, label: "My Properties" },
+  { to: "/buyer/history", icon: History, label: "Purchase History" },
 ];
 
 export default function AppLayout() {
@@ -44,12 +55,33 @@ export default function AppLayout() {
         )}
       </div>
 
-      <nav className="flex-1 p-4 space-y-1">
-        {navItems.map((item) => (
+      <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+        <p className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest px-3 mb-2">Seller</p>
+        {sellerNavItems.map((item) => (
           <NavLink
             key={item.to}
             to={item.to}
             end={item.to === "/"}
+            onClick={() => isMobile && setSidebarOpen(false)}
+            className={({ isActive }) =>
+              `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+                isActive
+                  ? "bg-primary/10 text-chain border border-primary/20 glow-chain"
+                  : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+              }`
+            }
+          >
+            <item.icon className="w-4 h-4" />
+            {item.label}
+          </NavLink>
+        ))}
+        <div className="pt-4 pb-1">
+          <p className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest px-3 mb-2">Buyer</p>
+        </div>
+        {buyerNavItems.map((item) => (
+          <NavLink
+            key={item.to}
+            to={item.to}
             onClick={() => isMobile && setSidebarOpen(false)}
             className={({ isActive }) =>
               `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
