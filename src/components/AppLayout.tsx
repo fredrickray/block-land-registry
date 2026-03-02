@@ -1,4 +1,4 @@
-import { NavLink, Outlet } from "react-router-dom";
+import { NavLink, Outlet, Navigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { 
   Building2, 
@@ -12,10 +12,14 @@ import {
   Search,
   Send,
   Home,
-  History
+  History,
+  LogOut,
+  UserCircle2
 } from "lucide-react";
 import { useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
 
 const sellerNavItems = [
   { to: "/", icon: LayoutDashboard, label: "Dashboard" },
@@ -35,6 +39,11 @@ const buyerNavItems = [
 export default function AppLayout() {
   const isMobile = useIsMobile();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { user, logout } = useAuth();
+
+  if (!user) return <Navigate to="/login" replace />;
+
+  const navItems = user.role === "seller" ? sellerNavItems : buyerNavItems;
 
   const sidebarContent = (
     <>
@@ -45,7 +54,9 @@ export default function AppLayout() {
           </div>
           <div>
             <h1 className="font-display font-bold text-foreground text-sm tracking-tight">LandChain</h1>
-            <p className="text-[10px] text-muted-foreground font-mono uppercase tracking-widest">Registry v1.0</p>
+            <p className="text-[10px] text-muted-foreground font-mono uppercase tracking-widest">
+              {user.role === "seller" ? "Seller Panel" : "Buyer Panel"}
+            </p>
           </div>
         </div>
         {isMobile && (
@@ -56,8 +67,7 @@ export default function AppLayout() {
       </div>
 
       <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-        <p className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest px-3 mb-2">Seller</p>
-        {sellerNavItems.map((item) => (
+        {navItems.map((item) => (
           <NavLink
             key={item.to}
             to={item.to}
@@ -75,29 +85,16 @@ export default function AppLayout() {
             {item.label}
           </NavLink>
         ))}
-        <div className="pt-4 pb-1">
-          <p className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest px-3 mb-2">Buyer</p>
-        </div>
-        {buyerNavItems.map((item) => (
-          <NavLink
-            key={item.to}
-            to={item.to}
-            onClick={() => isMobile && setSidebarOpen(false)}
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
-                isActive
-                  ? "bg-primary/10 text-chain border border-primary/20 glow-chain"
-                  : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-              }`
-            }
-          >
-            <item.icon className="w-4 h-4" />
-            {item.label}
-          </NavLink>
-        ))}
       </nav>
 
-      <div className="p-4 border-t border-border">
+      <div className="p-4 border-t border-border space-y-3">
+        <div className="bg-secondary rounded-lg p-3">
+          <div className="flex items-center gap-2 mb-2">
+            <UserCircle2 className="w-4 h-4 text-chain" />
+            <span className="text-xs text-foreground font-medium truncate">{user.name}</span>
+          </div>
+          <p className="text-[10px] font-mono text-muted-foreground truncate">{user.email}</p>
+        </div>
         <div className="bg-secondary rounded-lg p-3">
           <p className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider mb-1">Network</p>
           <div className="flex items-center gap-2">
@@ -105,18 +102,19 @@ export default function AppLayout() {
             <span className="text-xs text-foreground font-mono">Simulated Chain</span>
           </div>
         </div>
+        <Button variant="ghost" size="sm" onClick={logout} className="w-full justify-start text-muted-foreground hover:text-destructive">
+          <LogOut className="w-4 h-4 mr-2" /> Sign Out
+        </Button>
       </div>
     </>
   );
 
   return (
     <div className="flex min-h-screen bg-background">
-      {/* Mobile overlay */}
       {isMobile && sidebarOpen && (
         <div className="fixed inset-0 bg-black/60 z-20" onClick={() => setSidebarOpen(false)} />
       )}
 
-      {/* Sidebar */}
       <aside
         className={`w-64 border-r border-border bg-sidebar flex flex-col fixed h-screen z-30 transition-transform duration-300 ${
           isMobile ? (sidebarOpen ? "translate-x-0" : "-translate-x-full") : "translate-x-0"
@@ -125,7 +123,6 @@ export default function AppLayout() {
         {sidebarContent}
       </aside>
 
-      {/* Main content */}
       <main className={`flex-1 ${isMobile ? "" : "ml-64"}`}>
         {isMobile && (
           <header className="sticky top-0 z-10 flex items-center gap-3 p-4 border-b border-border bg-background/80 backdrop-blur-sm">
