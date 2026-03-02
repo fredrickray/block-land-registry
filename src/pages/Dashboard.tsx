@@ -1,11 +1,14 @@
 import { useEffect, useState } from "react";
+import { Navigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Building2, ArrowRightLeft, Blocks, ShieldCheck } from "lucide-react";
 import { seedDemoData, getState, type Transaction } from "@/lib/blockchain";
+import { useAuth } from "@/contexts/AuthContext";
 import StatusBadge from "@/components/StatusBadge";
 import HashDisplay from "@/components/HashDisplay";
 
 export default function Dashboard() {
+  const { user } = useAuth();
   const [stats, setStats] = useState({ properties: 0, transfers: 0, blocks: 0 });
   const [recentTx, setRecentTx] = useState<Transaction[]>([]);
 
@@ -19,6 +22,8 @@ export default function Dashboard() {
     });
     setRecentTx(state.transactions.slice(-3).reverse());
   }, []);
+
+  if (user?.role === "buyer") return <Navigate to="/buyer/search" replace />;
 
   const statCards = [
     { label: "Properties", value: stats.properties, icon: Building2 },
