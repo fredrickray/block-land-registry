@@ -45,6 +45,15 @@ export default function AppLayout() {
 
   const navItems = user.role === "seller" ? sellerNavItems : buyerNavItems;
 
+  // Route protection: redirect if accessing wrong role's routes
+  const path = window.location.pathname;
+  if (user.role === "buyer" && !path.startsWith("/buyer")) {
+    return <Navigate to="/buyer/search" replace />;
+  }
+  if (user.role === "seller" && path.startsWith("/buyer")) {
+    return <Navigate to="/" replace />;
+  }
+
   const sidebarContent = (
     <>
       <div className="p-6 border-b border-border flex items-center justify-between">
