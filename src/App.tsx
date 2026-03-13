@@ -11,6 +11,7 @@ import RegisterProperty from "./pages/RegisterProperty";
 import TransferOwnership from "./pages/TransferOwnership";
 import VerifyOwnership from "./pages/VerifyOwnership";
 import TransactionHistory from "./pages/TransactionHistory";
+import BuyerDashboard from "./pages/buyer/BuyerDashboard";
 import PropertySearch from "./pages/buyer/PropertySearch";
 import TransferRequest from "./pages/buyer/TransferRequest";
 import MyProperties from "./pages/buyer/MyProperties";
