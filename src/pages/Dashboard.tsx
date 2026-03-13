@@ -23,7 +23,7 @@ export default function Dashboard() {
     setRecentTx(state.transactions.slice(-3).reverse());
   }, []);
 
-  if (user?.role === "buyer") return <Navigate to="/buyer/search" replace />;
+  if (user?.role === "buyer") return <Navigate to="/buyer/dashboard" replace />;
 
   const statCards = [
     { label: "Properties", value: stats.properties, icon: Building2 },

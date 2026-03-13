@@ -30,6 +30,7 @@ const sellerNavItems = [
 ];
 
 const buyerNavItems = [
+  { to: "/buyer/dashboard", icon: LayoutDashboard, label: "Dashboard" },
   { to: "/buyer/search", icon: Search, label: "Property Search" },
   { to: "/buyer/request", icon: Send, label: "Request Transfer" },
   { to: "/buyer/properties", icon: Home, label: "My Properties" },
@@ -48,7 +49,7 @@ export default function AppLayout() {
   // Route protection: redirect if accessing wrong role's routes
   const path = window.location.pathname;
   if (user.role === "buyer" && !path.startsWith("/buyer")) {
-    return <Navigate to="/buyer/search" replace />;
+    return <Navigate to="/buyer/dashboard" replace />;
   }
   if (user.role === "seller" && path.startsWith("/buyer")) {
     return <Navigate to="/" replace />;

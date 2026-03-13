@@ -11,6 +11,7 @@ import RegisterProperty from "./pages/RegisterProperty";
 import TransferOwnership from "./pages/TransferOwnership";
 import VerifyOwnership from "./pages/VerifyOwnership";
 import TransactionHistory from "./pages/TransactionHistory";
+import BuyerDashboard from "./pages/buyer/BuyerDashboard";
 import PropertySearch from "./pages/buyer/PropertySearch";
 import TransferRequest from "./pages/buyer/TransferRequest";
 import MyProperties from "./pages/buyer/MyProperties";
@@ -36,6 +37,7 @@ const App = () => (
               <Route path="/verify" element={<VerifyOwnership />} />
               <Route path="/transactions" element={<TransactionHistory />} />
               {/* Buyer routes */}
+              <Route path="/buyer/dashboard" element={<BuyerDashboard />} />
               <Route path="/buyer/search" element={<PropertySearch />} />
               <Route path="/buyer/request" element={<TransferRequest />} />
               <Route path="/buyer/properties" element={<MyProperties />} />
