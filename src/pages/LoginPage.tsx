@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Link as LinkIcon, UserCircle2, Building2, ShoppingBag } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -8,6 +9,7 @@ import { useAuth, type UserRole } from "@/contexts/AuthContext";
 
 export default function LoginPage() {
   const { login } = useAuth();
+  const navigate = useNavigate();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<UserRole | null>(null);
@@ -17,6 +19,7 @@ export default function LoginPage() {
     e.preventDefault();
     if (!name.trim() || !email.trim() || !role) return;
     login(name.trim(), email.trim(), role);
+    navigate(role === "seller" ? "/" : "/buyer/dashboard");
   };
 
   return (
