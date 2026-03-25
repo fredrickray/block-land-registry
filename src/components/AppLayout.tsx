@@ -11,6 +11,7 @@ import {
   X,
   Search,
   Send,
+  ClipboardCheck,
   Home,
   History,
   LogOut,
