@@ -36,6 +36,7 @@ const App = () => (
               <Route path="/register" element={<RegisterProperty />} />
               <Route path="/transfer" element={<TransferOwnership />} />
               <Route path="/verify" element={<VerifyOwnership />} />
+              <Route path="/requests" element={<ManageRequests />} />
               <Route path="/transactions" element={<TransactionHistory />} />
               {/* Buyer routes */}
               <Route path="/buyer/dashboard" element={<BuyerDashboard />} />

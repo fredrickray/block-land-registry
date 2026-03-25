@@ -27,6 +27,7 @@ const sellerNavItems = [
   { to: "/register", icon: Building2, label: "Register Property" },
   { to: "/transfer", icon: ArrowRightLeft, label: "Transfer" },
   { to: "/verify", icon: ShieldCheck, label: "Verify" },
+  { to: "/requests", icon: ClipboardCheck, label: "Requests" },
   { to: "/transactions", icon: ScrollText, label: "Transactions" },
 ];
 
