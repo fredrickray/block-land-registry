@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Link as LinkIcon, UserCircle2, Building2, ShoppingBag } from "lucide-react";
 import { Input } from "@/components/ui/input";
