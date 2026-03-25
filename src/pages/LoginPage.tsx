@@ -9,6 +9,7 @@ import { useAuth, type UserRole } from "@/contexts/AuthContext";
 
 export default function LoginPage() {
   const { login } = useAuth();
+  const navigate = useNavigate();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<UserRole | null>(null);
