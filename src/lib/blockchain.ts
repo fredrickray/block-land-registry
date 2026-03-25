@@ -326,6 +326,75 @@ export function getTransferRequests(): TransferRequest[] {
   return loadState().transferRequests;
 }
 
+export function getTransferRequestsForSeller(sellerName: string): TransferRequest[] {
+  const state = loadState();
+  return state.transferRequests.filter(r => {
+    const property = state.properties[r.propertyId];
+    return property && property.ownerName.toLowerCase() === sellerName.toLowerCase();
+  });
+}
+
+export function approveTransferRequest(requestId: string): { success: boolean; message: string } {
+  const state = loadState();
+  const request = state.transferRequests.find(r => r.id === requestId);
+  if (!request) return { success: false, message: 'Request not found.' };
+  if (request.status !== 'pending') return { success: false, message: 'Request already resolved.' };
+
+  request.status = 'approved';
+  request.resolvedAt = Date.now();
+
+  // Execute the transfer
+  const property = state.properties[request.propertyId];
+  if (!property) return { success: false, message: 'Property not found.' };
+
+  const previousOwner = property.ownerName;
+  property.ownerName = request.buyerName;
+  property.ownerContact = request.buyerContact;
+  property.hash = generateHash(JSON.stringify({ ...property, timestamp: Date.now() }));
+
+  const prevHash = state.blocks[state.blocks.length - 1].hash;
+  const tx: Transaction = {
+    id: `TX-${Date.now()}`,
+    blockIndex: state.blockIndex,
+    type: 'TRANSFER',
+    propertyId: request.propertyId,
+    from: previousOwner,
+    to: request.buyerName,
+    timestamp: Date.now(),
+    hash: generateHash(`transfer-${request.propertyId}-${Date.now()}`),
+    previousHash: prevHash,
+  };
+
+  const block: Block = {
+    index: state.blockIndex,
+    timestamp: Date.now(),
+    transactions: [tx],
+    previousHash: prevHash,
+    hash: generateHash(`block-${state.blockIndex}-${tx.hash}`),
+    nonce: Math.floor(Math.random() * 100000),
+  };
+
+  state.transactions.push(tx);
+  state.blocks.push(block);
+  state.blockIndex++;
+  saveState(state);
+
+  return { success: true, message: `Transfer approved. Ownership transferred to ${request.buyerName}.` };
+}
+
+export function rejectTransferRequest(requestId: string): { success: boolean; message: string } {
+  const state = loadState();
+  const request = state.transferRequests.find(r => r.id === requestId);
+  if (!request) return { success: false, message: 'Request not found.' };
+  if (request.status !== 'pending') return { success: false, message: 'Request already resolved.' };
+
+  request.status = 'rejected';
+  request.resolvedAt = Date.now();
+  saveState(state);
+
+  return { success: true, message: 'Transfer request rejected.' };
+}
+
 export function getPropertiesByOwner(ownerName: string): PropertyRecord[] {
   return Object.values(loadState().properties).filter(p => p.ownerName.toLowerCase() === ownerName.toLowerCase());
 }
