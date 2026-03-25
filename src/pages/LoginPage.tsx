@@ -19,6 +19,7 @@ export default function LoginPage() {
     e.preventDefault();
     if (!name.trim() || !email.trim() || !role) return;
     login(name.trim(), email.trim(), role);
+    navigate(role === "seller" ? "/" : "/buyer/dashboard");
   };
 
   return (
