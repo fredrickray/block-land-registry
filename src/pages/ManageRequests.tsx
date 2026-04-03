@@ -1,55 +1,65 @@
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { CheckCircle2, XCircle, Clock, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import {
+  seedDemoData,
   getTransferRequestsForSeller,
   approveTransferRequest,
   rejectTransferRequest,
   getState,
   type TransferRequest,
-} from "@/lib/blockchain";
+  type PropertyRecord,
+} from "@/lib/ledgerApi";
 
 export default function ManageRequests() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [requests, setRequests] = useState<TransferRequest[]>([]);
+  const [properties, setProperties] = useState<Record<string, PropertyRecord>>({});
 
-  const loadRequests = () => {
-    if (user) setRequests(getTransferRequestsForSeller(user.name));
-  };
+  const reload = useCallback(async () => {
+    if (!user) return;
+    await seedDemoData();
+    const state = await getState();
+    setProperties(state.properties);
+    const next = await getTransferRequestsForSeller(user.name);
+    setRequests(next);
+  }, [user]);
 
-  useEffect(loadRequests, [user]);
+  useEffect(() => {
+    reload().catch(() => {
+      // ignore
+    });
+  }, [reload]);
 
-  const handleApprove = (id: string) => {
-    const result = approveTransferRequest(id);
+  const handleApprove = async (id: string) => {
+    const result = await approveTransferRequest(id);
     toast({
       title: result.success ? "Approved" : "Error",
       description: result.message,
       variant: result.success ? "default" : "destructive",
     });
-    loadRequests();
+    await reload();
   };
 
-  const handleReject = (id: string) => {
-    const result = rejectTransferRequest(id);
+  const handleReject = async (id: string) => {
+    const result = await rejectTransferRequest(id);
     toast({
       title: result.success ? "Rejected" : "Error",
       description: result.message,
       variant: result.success ? "default" : "destructive",
     });
-    loadRequests();
+    await reload();
   };
 
   const pending = requests.filter((r) => r.status === "pending");
   const resolved = requests.filter((r) => r.status !== "pending");
 
-  const getPropertyLocation = (propertyId: string) => {
-    const state = getState();
-    return state.properties[propertyId]?.location || "Unknown";
-  };
+  const getPropertyLocation = (propertyId: string) =>
+    properties[propertyId]?.location || "Unknown";
 
   return (
     <div className="space-y-8">

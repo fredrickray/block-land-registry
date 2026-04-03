@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { ArrowRightLeft, CheckCircle2, Search } from "lucide-react";
-import { getAllProperties, transferOwnership, verifyProperty } from "@/lib/blockchain";
+import { getAllProperties, seedDemoData, transferOwnership, type PropertyRecord, verifyProperty } from "@/lib/ledgerApi";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -13,9 +13,25 @@ export default function TransferOwnership() {
   const [newContact, setNewContact] = useState('');
   const [found, setFound] = useState(false);
   const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
+  const [properties, setProperties] = useState<PropertyRecord[]>([]);
 
-  const lookupProperty = () => {
-    const res = verifyProperty(propertyId);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      await seedDemoData();
+      const all = await getAllProperties();
+      if (cancelled) return;
+      setProperties(all);
+    })().catch(() => {
+      // backend down / first run, keep form usable
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const lookupProperty = async () => {
+    const res = await verifyProperty(propertyId);
     if (res.found && res.property) {
       setCurrentOwner(res.property.ownerName);
       setFound(true);
@@ -27,9 +43,9 @@ export default function TransferOwnership() {
     }
   };
 
-  const handleTransfer = (e: React.FormEvent) => {
+  const handleTransfer = async (e: React.FormEvent) => {
     e.preventDefault();
-    const res = transferOwnership(propertyId, newOwner, newContact);
+    const res = await transferOwnership(propertyId, newOwner, newContact);
     setResult(res);
     if (res.success) {
       setFound(false);
@@ -39,8 +55,6 @@ export default function TransferOwnership() {
       setNewContact('');
     }
   };
-
-  const properties = getAllProperties();
 
   return (
     <div className="max-w-2xl space-y-8">

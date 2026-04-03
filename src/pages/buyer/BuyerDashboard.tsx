@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Building2, Clock, CheckCircle, Search } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { getPropertiesByOwner, getPurchaseHistory, getTransferRequests, type PropertyRecord, type Transaction, type TransferRequest } from "@/lib/blockchain";
+import { getPropertiesByOwner, getPurchaseHistory, getTransferRequests, seedDemoData, type PropertyRecord, type Transaction, type TransferRequest } from "@/lib/ledgerApi";
 import StatusBadge from "@/components/StatusBadge";
 import HashDisplay from "@/components/HashDisplay";
 
@@ -14,9 +14,30 @@ export default function BuyerDashboard() {
 
   useEffect(() => {
     if (!user) return;
-    setOwnedProperties(getPropertiesByOwner(user.name));
-    setPendingRequests(getTransferRequests().filter(r => r.buyerName.toLowerCase() === user.name.toLowerCase() && r.status === "pending"));
-    setRecentPurchases(getPurchaseHistory(user.name).slice(-3).reverse());
+    let cancelled = false;
+    (async () => {
+      await seedDemoData();
+      const [owned, allRequests, purchaseHistory] = await Promise.all([
+        getPropertiesByOwner(user.name),
+        getTransferRequests(),
+        getPurchaseHistory(user.name),
+      ]);
+      if (cancelled) return;
+      setOwnedProperties(owned);
+      setPendingRequests(
+        allRequests.filter(
+          (r) =>
+            r.buyerName.toLowerCase() === user.name.toLowerCase() &&
+            r.status === "pending",
+        ),
+      );
+      setRecentPurchases(purchaseHistory.slice(-3).reverse());
+    })().catch(() => {
+      // ignore backend failure
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [user]);
 
   const statCards = [

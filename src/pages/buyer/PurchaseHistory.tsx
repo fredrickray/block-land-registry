@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { Search, ArrowRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { seedDemoData, getPurchaseHistory, type Transaction } from "@/lib/blockchain";
+import { seedDemoData, getPurchaseHistory, type Transaction } from "@/lib/ledgerApi";
 import StatusBadge from "@/components/StatusBadge";
 import HashDisplay from "@/components/HashDisplay";
 
@@ -12,11 +12,23 @@ export default function PurchaseHistory() {
   const [searched, setSearched] = useState(false);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
 
-  useEffect(() => { seedDemoData(); }, []);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      await seedDemoData();
+      if (cancelled) return;
+    })().catch(() => {
+      // ignore
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
-  const handleSearch = () => {
+  const handleSearch = async () => {
     if (!buyerName.trim()) return;
-    setTransactions(getPurchaseHistory(buyerName.trim()).reverse());
+    const txs = await getPurchaseHistory(buyerName.trim());
+    setTransactions(txs.reverse());
     setSearched(true);
   };
 

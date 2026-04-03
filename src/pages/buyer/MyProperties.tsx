@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { Building2, MapPin, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { seedDemoData, getPropertiesByOwner, type PropertyRecord } from "@/lib/blockchain";
+import { seedDemoData, getPropertiesByOwner, type PropertyRecord } from "@/lib/ledgerApi";
 import HashDisplay from "@/components/HashDisplay";
 
 export default function MyProperties() {
@@ -11,11 +11,23 @@ export default function MyProperties() {
   const [searched, setSearched] = useState(false);
   const [properties, setProperties] = useState<PropertyRecord[]>([]);
 
-  useEffect(() => { seedDemoData(); }, []);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      await seedDemoData();
+      if (cancelled) return;
+    })().catch(() => {
+      // ignore
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
-  const handleSearch = () => {
+  const handleSearch = async () => {
     if (!ownerName.trim()) return;
-    setProperties(getPropertiesByOwner(ownerName.trim()));
+    const res = await getPropertiesByOwner(ownerName.trim());
+    setProperties(res);
     setSearched(true);
   };
 

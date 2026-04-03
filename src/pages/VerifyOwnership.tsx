@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { ShieldCheck, Search, CheckCircle2, XCircle } from "lucide-react";
-import { verifyProperty, type PropertyRecord, type Transaction } from "@/lib/blockchain";
+import { seedDemoData, verifyProperty, type PropertyRecord, type Transaction } from "@/lib/ledgerApi";
 import HashDisplay from "@/components/HashDisplay";
 import StatusBadge from "@/components/StatusBadge";
 import { Input } from "@/components/ui/input";
@@ -14,8 +14,14 @@ export default function VerifyOwnership() {
   const [verified, setVerified] = useState(false);
   const [txs, setTxs] = useState<Transaction[]>([]);
 
-  const handleVerify = () => {
-    const res = verifyProperty(propertyId);
+  useEffect(() => {
+    seedDemoData().catch(() => {
+      // ignore
+    });
+  }, []);
+
+  const handleVerify = async () => {
+    const res = await verifyProperty(propertyId);
     setSearched(true);
     if (res.found && res.property) {
       setProperty(res.property);

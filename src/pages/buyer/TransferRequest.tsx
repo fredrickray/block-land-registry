@@ -4,7 +4,7 @@ import { Send, Search, CheckCircle2, AlertCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { seedDemoData, verifyProperty, requestTransfer } from "@/lib/blockchain";
+import { seedDemoData, verifyProperty, requestTransfer } from "@/lib/ledgerApi";
 
 export default function TransferRequest() {
   const [propertyId, setPropertyId] = useState("");
@@ -15,10 +15,13 @@ export default function TransferRequest() {
   const [propertyLocation, setPropertyLocation] = useState("");
   const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
   const [loading, setLoading] = useState(false);
+  const [lookupLoading, setLookupLoading] = useState(false);
 
-  const handleLookup = () => {
-    seedDemoData();
-    const res = verifyProperty(propertyId.trim());
+  const handleLookup = async () => {
+    setLookupLoading(true);
+    try {
+      await seedDemoData();
+      const res = await verifyProperty(propertyId.trim());
     if (res.found && res.property) {
       setPropertyOwner(res.property.ownerName);
       setPropertyLocation(res.property.location);
@@ -28,16 +31,22 @@ export default function TransferRequest() {
       setLookupDone(false);
       setResult({ success: false, message: "Property not found on blockchain." });
     }
+    } finally {
+      setLookupLoading(false);
+    }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!buyerName.trim() || !buyerContact.trim()) return;
     setLoading(true);
-    setTimeout(() => {
-      const res = requestTransfer(propertyId.trim(), buyerName.trim(), buyerContact.trim());
+    try {
+      // Small delay to keep the UX similar to the original demo.
+      await new Promise((r) => setTimeout(r, 800));
+      const res = await requestTransfer(propertyId.trim(), buyerName.trim(), buyerContact.trim());
       setResult(res);
+    } finally {
       setLoading(false);
-    }, 800);
+    }
   };
 
   return (
@@ -57,7 +66,7 @@ export default function TransferRequest() {
             onChange={(e) => { setPropertyId(e.target.value); setLookupDone(false); setResult(null); }}
             className="bg-secondary border-border font-mono"
           />
-          <Button onClick={handleLookup} variant="outline" className="shrink-0">
+          <Button onClick={handleLookup} variant="outline" className="shrink-0" disabled={lookupLoading}>
             <Search className="w-4 h-4 mr-2" /> Lookup
           </Button>
         </div>

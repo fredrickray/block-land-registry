@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Building2, ArrowRightLeft, Blocks, ShieldCheck } from "lucide-react";
-import { seedDemoData, getState, type Transaction } from "@/lib/blockchain";
+import { seedDemoData, getState, type BlockchainState, type Transaction } from "@/lib/ledgerApi";
 import { useAuth } from "@/contexts/AuthContext";
 import StatusBadge from "@/components/StatusBadge";
 import HashDisplay from "@/components/HashDisplay";
@@ -11,16 +11,27 @@ export default function Dashboard() {
   const { user } = useAuth();
   const [stats, setStats] = useState({ properties: 0, transfers: 0, blocks: 0 });
   const [recentTx, setRecentTx] = useState<Transaction[]>([]);
+  const [chainHeadHash, setChainHeadHash] = useState("");
 
   useEffect(() => {
-    seedDemoData();
-    const state = getState();
-    setStats({
-      properties: Object.keys(state.properties).length,
-      transfers: state.transactions.filter(t => t.type === 'TRANSFER').length,
-      blocks: state.blocks.length,
+    let cancelled = false;
+    (async () => {
+      await seedDemoData();
+      const state: BlockchainState = await getState();
+      if (cancelled) return;
+      setStats({
+        properties: Object.keys(state.properties).length,
+        transfers: state.transactions.filter((t) => t.type === "TRANSFER").length,
+        blocks: state.blocks.length,
+      });
+      setRecentTx(state.transactions.slice(-3).reverse());
+      setChainHeadHash(state.blocks[state.blocks.length - 1]?.hash ?? "");
+    })().catch(() => {
+      // Keep the dashboard render stable even if the backend is down.
     });
-    setRecentTx(state.transactions.slice(-3).reverse());
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   if (user?.role === "buyer") return <Navigate to="/buyer/dashboard" replace />;
@@ -81,7 +92,7 @@ export default function Dashboard() {
 
       <div className="bg-card border border-border rounded-xl p-6">
         <h2 className="text-sm font-mono text-muted-foreground uppercase tracking-wider mb-4">Latest Block Hash</h2>
-        <HashDisplay hash={getState().blocks[getState().blocks.length - 1]?.hash || ''} label="Chain Head" />
+        <HashDisplay hash={chainHeadHash} label="Chain Head" />
       </div>
     </div>
   );

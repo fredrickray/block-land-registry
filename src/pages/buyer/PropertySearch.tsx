@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Search, MapPin, User, Hash } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { seedDemoData, searchProperties, type PropertyRecord } from "@/lib/blockchain";
+import { seedDemoData, searchProperties, type PropertyRecord } from "@/lib/ledgerApi";
 import HashDisplay from "@/components/HashDisplay";
 
 export default function PropertySearch() {
@@ -10,12 +10,32 @@ export default function PropertySearch() {
   const [results, setResults] = useState<PropertyRecord[]>([]);
 
   useEffect(() => {
-    seedDemoData();
-    setResults(searchProperties(""));
+    let cancelled = false;
+    (async () => {
+      await seedDemoData();
+      const res = await searchProperties("");
+      if (cancelled) return;
+      setResults(res);
+    })().catch(() => {
+      // ignore
+    });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
-    setResults(searchProperties(query));
+    let cancelled = false;
+    (async () => {
+      const res = await searchProperties(query);
+      if (cancelled) return;
+      setResults(res);
+    })().catch(() => {
+      // ignore
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [query]);
 
   return (

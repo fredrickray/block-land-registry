@@ -8,18 +8,38 @@ import { Label } from "@/components/ui/label";
 import { useAuth, type UserRole } from "@/contexts/AuthContext";
 
 export default function LoginPage() {
-  const { login } = useAuth();
+  const { login, signup } = useAuth();
   const navigate = useNavigate();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [role, setRole] = useState<UserRole | null>(null);
   const [isSignup, setIsSignup] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim() || !email.trim() || !role) return;
-    login(name.trim(), email.trim(), role);
-    navigate(role === "seller" ? "/" : "/buyer/dashboard");
+    if (!email.trim() || !password.trim()) return;
+    if (isSignup && (!name.trim() || !role)) return;
+    setSubmitting(true);
+    setError("");
+    try {
+      if (isSignup) {
+        await signup(name.trim(), email.trim(), password, role!);
+        navigate(role === "seller" ? "/" : "/buyer/dashboard");
+      } else {
+        await login(email.trim(), password);
+        // Role comes from backend user profile; route dynamically after login.
+        const stored = localStorage.getItem("landchain_user");
+        const parsed = stored ? (JSON.parse(stored) as { role?: UserRole }) : null;
+        navigate(parsed?.role === "buyer" ? "/buyer/dashboard" : "/");
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Authentication failed");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -78,7 +98,8 @@ export default function LoginPage() {
           </div>
 
           <div className="space-y-3">
-            <div>
+            {isSignup && (
+              <div>
               <Label className="text-xs text-muted-foreground">Full Name</Label>
               <Input
                 value={name}
@@ -86,7 +107,8 @@ export default function LoginPage() {
                 placeholder="Enter your full name"
                 className="bg-secondary border-border mt-1"
               />
-            </div>
+              </div>
+            )}
             <div>
               <Label className="text-xs text-muted-foreground">Email</Label>
               <Input
@@ -97,15 +119,27 @@ export default function LoginPage() {
                 className="bg-secondary border-border mt-1"
               />
             </div>
+            <div>
+              <Label className="text-xs text-muted-foreground">Password</Label>
+              <Input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter password"
+                className="bg-secondary border-border mt-1"
+              />
+            </div>
           </div>
+
+          {error && <p className="text-xs text-destructive">{error}</p>}
 
           <Button
             type="submit"
-            disabled={!name.trim() || !email.trim() || !role}
+            disabled={submitting || !email.trim() || !password.trim() || (isSignup && (!name.trim() || !role))}
             className="w-full"
           >
             <UserCircle2 className="w-4 h-4 mr-2" />
-            {isSignup ? "Create Account" : "Sign In"}
+            {submitting ? "Please wait..." : isSignup ? "Create Account" : "Sign In"}
           </Button>
 
           <p className="text-center text-xs text-muted-foreground">
@@ -120,9 +154,7 @@ export default function LoginPage() {
           </p>
         </form>
 
-        <p className="text-center text-[10px] text-muted-foreground font-mono">
-          Simulated authentication for prototype purposes
-        </p>
+        <p className="text-center text-[10px] text-muted-foreground font-mono">Backend authentication enabled</p>
       </motion.div>
     </div>
   );

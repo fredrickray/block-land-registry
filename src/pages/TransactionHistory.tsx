@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { ScrollText, Blocks } from "lucide-react";
-import { getAllTransactions, getBlocks, type Transaction, type Block } from "@/lib/blockchain";
+import { getAllTransactions, getBlocks, seedDemoData, type Transaction, type Block } from "@/lib/ledgerApi";
 import StatusBadge from "@/components/StatusBadge";
 import HashDisplay from "@/components/HashDisplay";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -11,8 +11,19 @@ export default function TransactionHistory() {
   const [blocks, setBlocks] = useState<Block[]>([]);
 
   useEffect(() => {
-    setTransactions(getAllTransactions().reverse());
-    setBlocks(getBlocks().reverse());
+    let cancelled = false;
+    (async () => {
+      await seedDemoData();
+      const [txs, blks] = await Promise.all([getAllTransactions(), getBlocks()]);
+      if (cancelled) return;
+      setTransactions(txs.reverse());
+      setBlocks(blks.reverse());
+    })().catch(() => {
+      // Keep render stable
+    });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   return (

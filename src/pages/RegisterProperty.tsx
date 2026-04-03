@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Building2, Hash, CheckCircle2 } from "lucide-react";
-import { registerProperty, generateHash } from "@/lib/blockchain";
+import { registerProperty, generateHash } from "@/lib/ledgerApi";
 import HashDisplay from "@/components/HashDisplay";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -23,9 +23,9 @@ export default function RegisterProperty() {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const res = registerProperty(form.propertyId, form.location, form.ownerName, form.ownerContact);
+    const res = await registerProperty(form.propertyId, form.location, form.ownerName, form.ownerContact);
     setResult(res);
     if (res.success) {
       setForm({ propertyId: '', location: '', ownerName: '', ownerContact: '' });

@@ -42,7 +42,11 @@ const buyerNavItems = [
 export default function AppLayout() {
   const isMobile = useIsMobile();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { user, logout } = useAuth();
+  const { user, logout, loading } = useAuth();
+
+  if (loading) {
+    return <div className="min-h-screen bg-background" />;
+  }
 
   if (!user) return <Navigate to="/login" replace />;
 
