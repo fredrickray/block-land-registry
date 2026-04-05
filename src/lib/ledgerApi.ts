@@ -227,3 +227,29 @@ export async function searchProperties(query: string): Promise<PropertyRecord[]>
   );
 }
 
+/** Off-chain + optional on-chain Merkle anchor (middle-path architecture). */
+export interface LedgerAnchor {
+  anchorId: string;
+  fromBlockIndex: number;
+  toBlockIndex: number;
+  blockCount: number;
+  blockHashes: string[];
+  merkleRoot: string;
+  target: "off_chain" | "ethereum";
+  chainTxHash?: string;
+  chainId?: number;
+  anchoredAt: number;
+}
+
+export async function anchorPendingBlocks(): Promise<{
+  success: boolean;
+  message: string;
+  anchor?: LedgerAnchor;
+}> {
+  return apiFetch("/api/anchor", { method: "POST" });
+}
+
+export async function getLatestAnchor(): Promise<{ anchor: LedgerAnchor | null }> {
+  return apiFetch("/api/anchor/latest");
+}
+
